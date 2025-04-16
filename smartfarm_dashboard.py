@@ -27,6 +27,13 @@ st.image(logo_url, width=180)
 
 st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
+# 사용자 입력 - 담당자명, 농장명
+col1, col2 = st.columns(2)
+with col1:
+    manager_name = st.text_input("담당자 이름", "이한승")
+with col2:
+    farm_name = st.text_input("농장명", "IWS-Agro")
+
 col1, col2 = st.columns(2)
 with col1:
     crop_type = st.selectbox("작물 선택", ["설향 딸기", "핑크 토마토"])
@@ -97,13 +104,14 @@ def generate_pdf(data, crop, harvest):
     c.setFont("Helvetica-Bold", 16)
     c.drawString(200, 800, f"SmartFarm 생육 리포트 - {crop}")
     c.setFont("Helvetica", 12)
-    c.drawString(50, 740, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
-    c.drawString(50, 720, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
-    c.drawString(50, 700, f"평균 온도: {data['평균온도'].mean():.1f}℃")
-    c.drawString(50, 680, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
-    c.drawString(50, 660, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
-    c.drawString(50, 630, "[코멘트 요약]")
-    y = 610
+    c.drawString(50, 740, f"담당자: {manager_name} | 농장명: {farm_name}")
+    c.drawString(50, 720, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
+    c.drawString(50, 700, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
+    c.drawString(50, 680, f"평균 온도: {data['평균온도'].mean():.1f}℃")
+    c.drawString(50, 660, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
+    c.drawString(50, 640, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
+    c.drawString(50, 610, "[코멘트 요약]")
+    y = 590
     for cmt in comments:
         c.drawString(60, y, f"- {cmt}")
         y -= 20
