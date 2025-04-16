@@ -21,8 +21,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-logo_path = "1. CI_레터마크_PNG"
-st.image(logo_path, width=180)
+logo_path = "dohwa_logo.png"
+with open("dohwa_logo.png", "rb") as f:
+    logo_bytes = f.read()
+st.image(logo_bytes, width=180)
 
 st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
