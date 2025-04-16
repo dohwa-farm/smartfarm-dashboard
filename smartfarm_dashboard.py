@@ -5,6 +5,9 @@ import plotly.express as px
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Image
+from reportlab.lib.utils import ImageReader
+import requests
 
 st.set_page_config(
     page_title="📡 스마트팜 환경 리포트 | 키르기스스탄 딸기·토마토",
@@ -18,7 +21,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Dohwa_Engineering_logo.svg/2560px-Dohwa_Engineering_logo.svg.png", width=180)
+# 변경된 도화 로고 이미지 사용
+logo_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/Dohwa_logo_2024_darkgreen.png"
+st.image(logo_url, width=180)
 
 st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
@@ -87,16 +92,18 @@ st.plotly_chart(fig2, use_container_width=True)
 def generate_pdf(data, crop, harvest):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
+    logo = ImageReader(requests.get(logo_url, stream=True).raw)
+    c.drawImage(logo, 50, 770, width=120, preserveAspectRatio=True, mask='auto')
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, 800, f"SmartFarm 생육 리포트 - {crop}")
+    c.drawString(200, 800, f"SmartFarm 생육 리포트 - {crop}")
     c.setFont("Helvetica", 12)
-    c.drawString(50, 780, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
-    c.drawString(50, 760, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
-    c.drawString(50, 740, f"평균 온도: {data['평균온도'].mean():.1f}℃")
-    c.drawString(50, 720, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
-    c.drawString(50, 700, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
-    c.drawString(50, 660, "[코멘트 요약]")
-    y = 640
+    c.drawString(50, 740, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
+    c.drawString(50, 720, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
+    c.drawString(50, 700, f"평균 온도: {data['평균온도'].mean():.1f}℃")
+    c.drawString(50, 680, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
+    c.drawString(50, 660, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
+    c.drawString(50, 630, "[코멘트 요약]")
+    y = 610
     for cmt in comments:
         c.drawString(60, y, f"- {cmt}")
         y -= 20
@@ -109,4 +116,3 @@ st.subheader("📄 리포트 다운로드")
 st.download_button("CSV 다운로드", df.to_csv(index=False).encode('utf-8'), file_name="smartfarm_data.csv")
 pdf = generate_pdf(df, crop_type, predicted_harvest)
 st.download_button("PDF 리포트 다운로드", pdf, file_name="smartfarm_report.pdf")
-
