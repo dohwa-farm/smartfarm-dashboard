@@ -7,7 +7,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Image
 from reportlab.lib.utils import ImageReader
-import requests
+from PIL import Image as PILImage
 
 st.set_page_config(
     page_title="📡 스마트팜 환경 리포트 | 키르기스스탄 딸기·토마토",
@@ -21,8 +21,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-logo_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/Dohwa_logo_2024_darkgreen.png"
-st.image(logo_url, width=180)
+logo_path = "dohwa_logo.png"
+st.image(logo_path, width=180)
 
 st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
@@ -58,20 +58,23 @@ with col1:
 with col2:
     flower_date = st.date_input("개화일 입력", dt.date.today())
 
-# 예시 센서 데이터 생성
-df = pd.DataFrame({
-    "날짜": pd.date_range(start=flower_date, periods=30),
-    "평균온도": [22 + i*0.1 for i in range(30)],
-    "야간최저온도": [10 + (i % 3) for i in range(30)],
-    "EC": [1.1 + (i % 5) * 0.05 for i in range(30)],
-})
+# 생육 환경 수동 입력 테이블
+df = st.data_editor(pd.DataFrame({
+    "날짜": pd.date_range(start=flower_date, periods=7),
+    "평균온도": [None]*7,
+    "야간최저온도": [None]*7,
+    "EC": [None]*7,
+}), use_container_width=True, num_rows="dynamic")
 
+# 생육 예측 계산
+@st.cache_data(ttl=60)
 def simulate_growth(data, crop):
     base_days = 35 if crop == "설향 딸기" else 50
     optimal_temp = 25
     delay_night_temp = 12 if crop == "설향 딸기" else 15
 
     def score(row):
+        if pd.isna(row["평균온도"]): return 0
         t = max(0.2, 1 - abs(row["평균온도"] - optimal_temp) / 15)
         d = 1.15 if row["야간최저온도"] < delay_night_temp else 1.0
         return t * d
@@ -92,9 +95,9 @@ col3.metric("예상 수확일", predicted_harvest.strftime('%Y-%m-%d') if predic
 
 st.subheader("🧠 생육 분석 코멘트")
 comments = []
-if df['야간최저온도'].min() < 10:
+if df['야간최저온도'].min(skipna=True) < 10:
     comments.append("⚠️ 야간 기온이 10℃ 이하로 낮아 생육 지연 우려가 있습니다.")
-if df['EC'].mean() > 1.8:
+if df['EC'].mean(skipna=True) > 1.8:
     comments.append("⚠️ EC가 1.8 이상으로 염류장해 가능성이 있습니다. 양액 희석 필요.")
 if (dt.date.today() - flower_date).days > 30:
     comments.append("✅ 개화 후 30일 이상 경과, 수확 적기 진입 중입니다.")
@@ -104,15 +107,17 @@ for c in comments:
     st.write(c)
 
 st.subheader("📈 생육 환경 변화 그래프")
-fig1 = px.line(df, x="날짜", y=["평균온도", "야간최저온도"], title="온도 추이")
-fig2 = px.line(df, x="날짜", y="EC", title="EC 추이")
-st.plotly_chart(fig1, use_container_width=True)
-st.plotly_chart(fig2, use_container_width=True)
+if "평균온도" in df.columns and df["평균온도"].notna().any():
+    fig1 = px.line(df, x="날짜", y=["평균온도", "야간최저온도"], title="온도 추이")
+    fig2 = px.line(df, x="날짜", y="EC", title="EC 추이")
+    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
+
 
 def generate_pdf(data, crop, harvest):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
-    logo = ImageReader(requests.get(logo_url, stream=True).raw)
+    logo = ImageReader(logo_path)
     c.drawImage(logo, 50, 770, width=120, preserveAspectRatio=True, mask='auto')
     c.setFont("Helvetica-Bold", 16)
     c.drawString(200, 800, f"SmartFarm 생육 리포트 - {crop}")
@@ -122,9 +127,9 @@ def generate_pdf(data, crop, harvest):
     c.drawString(50, 700, f"작성일: {dt.date.today().strftime('%Y-%m-%d')}")
     c.drawString(50, 680, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
     c.drawString(50, 660, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
-    c.drawString(50, 640, f"평균 온도: {data['평균온도'].mean():.1f}℃")
-    c.drawString(50, 620, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
-    c.drawString(50, 600, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
+    c.drawString(50, 640, f"평균 온도: {data['평균온도'].mean(skipna=True):.1f}℃")
+    c.drawString(50, 620, f"야간 최저온도: {data['야간최저온도'].min(skipna=True):.1f}℃")
+    c.drawString(50, 600, f"평균 EC: {data['EC'].mean(skipna=True):.2f} mS/cm")
     c.drawString(50, 580, "[코멘트 요약]")
     y = 560
     for cmt in comments:
@@ -141,6 +146,6 @@ def generate_pdf(data, crop, harvest):
     return buffer
 
 st.subheader("📄 리포트 다운로드")
-st.download_button("CSV 다운로드", df.to_csv(index=False).encode('utf-8'), file_name="smartfarm_data.csv")
+st.download_button("데이터 요약 다운로드 (CSV)", df.to_csv(index=False).encode('utf-8'), file_name="smartfarm_data.csv")
 pdf = generate_pdf(df, crop_type, predicted_harvest)
 st.download_button("PDF 리포트 다운로드", pdf, file_name="smartfarm_report.pdf")
