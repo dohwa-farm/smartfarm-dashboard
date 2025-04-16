@@ -65,7 +65,7 @@ if page == "🏠 기본정보 입력":
     zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
     farm_location = f"{selected_zone} - {zone_coords[0]}, {zone_coords[1]}"
     # 사용자 지정 맵 표시 (작은 마커)
-st.map(map_data.rename(columns={"lat": "latitude", "lon": "longitude"}), zoom=18)
+    st.map(map_data.rename(columns={"lat": "latitude", "lon": "longitude"}), zoom=18)
 
 if page == "📷 생육 일자별 기록":
     st.markdown("## 📷 생육 일자별 기록")
