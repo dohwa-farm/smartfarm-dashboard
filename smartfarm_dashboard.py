@@ -65,7 +65,38 @@ if page == "🏠 기본정보 입력":
     zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
     farm_location = f"{selected_zone} - {zone_coords[0]}, {zone_coords[1]}"
     # 사용자 지정 맵 표시 (작은 마커)
-    st.map(map_data.rename(columns={"lat": "latitude", "lon": "longitude"}), zoom=18)
+        import pydeck as pdk
+
+        st.pydeck_chart(pdk.Deck(
+        map_style='mapbox://styles/mapbox/satellite-v9',
+        initial_view_state=pdk.ViewState(
+            latitude=42.9503,
+            longitude=74.7199,
+            zoom=18,
+            pitch=0,
+        ),
+        layers=[
+            pdk.Layer(
+                'ScatterplotLayer',
+                data=map_data,
+                get_position='[lon, lat]',
+                get_color='[255, 0, 0, 160]',
+                get_radius=4,
+                pickable=True,
+            ),
+            pdk.Layer(
+                'TextLayer',
+                data=map_data,
+                get_position='[lon, lat]',
+                get_text='위치명',
+                get_size=14,
+                get_color='[0, 0, 0]',
+                get_angle=0,
+                get_alignment_baseline='bottom'
+            )
+        ],
+        tooltip={"text": "{위치명}"}
+    ))
 
 if page == "📷 생육 일자별 기록":
     st.markdown("## 📷 생육 일자별 기록")
