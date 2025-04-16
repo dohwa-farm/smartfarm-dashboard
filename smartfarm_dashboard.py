@@ -21,18 +21,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 변경된 도화 로고 이미지 사용
 logo_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/Dohwa_logo_2024_darkgreen.png"
 st.image(logo_url, width=180)
 
 st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
-# 사용자 입력 - 담당자명, 농장명
 col1, col2 = st.columns(2)
 with col1:
     manager_name = st.text_input("담당자 이름", "이한승")
 with col2:
     farm_name = st.text_input("농장명", "IWS-Agro")
+
+st.subheader("📍 농장 구역 선택 (지도 기반)")
+farm_options = {
+    "A동 토마토": "42.950226, 74.719877",
+    "B동 딸기": "42.950200, 74.719900",
+    "C동": "42.950000, 74.719850",
+    "D동 토마토": "42.950100, 74.719950",
+    "E동 토마토": "42.950300, 74.719700",
+    "F동": "42.950400, 74.719600",
+    "G동 토마토": "42.950500, 74.719500"
+}
+selected_zone = st.selectbox("농장 내 위치 선택:", list(farm_options.keys()))
+zone_coords = farm_options[selected_zone]
+farm_location = f"{selected_zone} - {zone_coords}"
+
+map_df = pd.DataFrame({"lat": [float(zone_coords.split(",")[0])], "lon": [float(zone_coords.split(",")[1])]})
+st.map(map_df, zoom=18)
+
+uploaded_photo = st.file_uploader("📷 생육 사진 업로드 (선택)", type=["jpg", "jpeg", "png"])
+activity_log = st.text_area("📝 생육 일지 메모", "")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -48,7 +66,6 @@ df = pd.DataFrame({
     "EC": [1.1 + (i % 5) * 0.05 for i in range(30)],
 })
 
-# 생육 예측 함수
 def simulate_growth(data, crop):
     base_days = 35 if crop == "설향 딸기" else 50
     optimal_temp = 25
@@ -67,14 +84,12 @@ def simulate_growth(data, crop):
 
 predicted_harvest, df = simulate_growth(df, crop_type)
 
-# 상태 요약 카드
 st.subheader("📊 생육 예측 요약")
 col1, col2, col3 = st.columns(3)
 col1.metric("평균 온도", f"{df['평균온도'].mean():.1f}℃")
 col2.metric("야간 최저온도", f"{df['야간최저온도'].min():.1f}℃")
 col3.metric("예상 수확일", predicted_harvest.strftime('%Y-%m-%d') if predicted_harvest else "예측불가")
 
-# 자동 코멘트 생성
 st.subheader("🧠 생육 분석 코멘트")
 comments = []
 if df['야간최저온도'].min() < 10:
@@ -88,14 +103,12 @@ if not comments:
 for c in comments:
     st.write(c)
 
-# 환경 추이 그래프
 st.subheader("📈 생육 환경 변화 그래프")
 fig1 = px.line(df, x="날짜", y=["평균온도", "야간최저온도"], title="온도 추이")
 fig2 = px.line(df, x="날짜", y="EC", title="EC 추이")
 st.plotly_chart(fig1, use_container_width=True)
 st.plotly_chart(fig2, use_container_width=True)
 
-# PDF 리포트 생성 함수
 def generate_pdf(data, crop, harvest):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -105,21 +118,28 @@ def generate_pdf(data, crop, harvest):
     c.drawString(200, 800, f"SmartFarm 생육 리포트 - {crop}")
     c.setFont("Helvetica", 12)
     c.drawString(50, 740, f"담당자: {manager_name} | 농장명: {farm_name}")
-    c.drawString(50, 720, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
-    c.drawString(50, 700, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
-    c.drawString(50, 680, f"평균 온도: {data['평균온도'].mean():.1f}℃")
-    c.drawString(50, 660, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
-    c.drawString(50, 640, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
-    c.drawString(50, 610, "[코멘트 요약]")
-    y = 590
+    c.drawString(50, 720, f"농장 위치: {farm_location}")
+    c.drawString(50, 700, f"작성일: {dt.date.today().strftime('%Y-%m-%d')}")
+    c.drawString(50, 680, f"개화일: {flower_date.strftime('%Y-%m-%d')}")
+    c.drawString(50, 660, f"예상 수확일: {harvest.strftime('%Y-%m-%d') if harvest else '예측불가'}")
+    c.drawString(50, 640, f"평균 온도: {data['평균온도'].mean():.1f}℃")
+    c.drawString(50, 620, f"야간 최저온도: {data['야간최저온도'].min():.1f}℃")
+    c.drawString(50, 600, f"평균 EC: {data['EC'].mean():.2f} mS/cm")
+    c.drawString(50, 580, "[코멘트 요약]")
+    y = 560
     for cmt in comments:
         c.drawString(60, y, f"- {cmt}")
         y -= 20
+    if activity_log:
+        c.drawString(50, y - 20, "[생육 일지 메모]")
+        text = c.beginText(60, y - 40)
+        for line in activity_log.split("\n"):
+            text.textLine(line)
+        c.drawText(text)
     c.save()
     buffer.seek(0)
     return buffer
 
-# 리포트 다운로드
 st.subheader("📄 리포트 다운로드")
 st.download_button("CSV 다운로드", df.to_csv(index=False).encode('utf-8'), file_name="smartfarm_data.csv")
 pdf = generate_pdf(df, crop_type, predicted_harvest)
