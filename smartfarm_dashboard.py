@@ -163,10 +163,9 @@ elif page == "📦 동결건조 관리":
     유통 가격의 변화는 재배 원가와 비교해 수익성을 결정하는 중요한 지표입니다. 특히 원자재, 에너지 비용,
     물류비 등의 변동성과 연동하여 가격 데이터를 분석하면 향후 수익률 시뮬레이션과 판매 전략 수립에 유용합니다.
 
-    📌 **부서장이 궁금할만한 핵심 인사이트**:
-    - 3월에 가격 하락 원인은 일시적 과잉공급인지, 품질 저하인지?
-    - 생산량 증가 대비 가격 증가폭은 충분한가? 마진율은 유지되고 있는가?
-    - 향후 6개월간 주요 바이어 확보를 위한 가격 밴드는?
+    - 3월 가격 하락은 공급 일시 증가 및 시장 반응이 복합적으로 작용했을 가능성이 있음.
+- 가격 대비 생산량의 증가폭을 감안할 때, 단위당 수익률의 안정성 확보가 필요한 구간임.
+- 다음 분기 가격 전략 수립을 위해 시장 내 경쟁 제품의 가격 추이를 모니터링할 필요 있음.
     """)
     price_data = pd.DataFrame({
         "월": ["1월", "2월", "3월", "4월"],
@@ -174,5 +173,4 @@ elif page == "📦 동결건조 관리":
     })
     st.dataframe(price_data, use_container_width=True)
     fig_price = px.line(price_data, x="월", y="평균가격(₩/kg)", markers=True, title="💹 월별 평균 유통 가격 추이")
-    st.plotly_chart(fig_price, use_container_width=True)
     st.plotly_chart(fig_price, use_container_width=True)
