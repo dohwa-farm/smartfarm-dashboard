@@ -138,15 +138,41 @@ elif page == "📊 생육 분석 요약":
 
 elif page == "📦 동결건조 관리":
     st.markdown('<div class="report-title">📦 동결건조 관리 리포트</div>', unsafe_allow_html=True)
-    st.subheader("🧊 월별 동결건조 생산현황 및 유통 가격 분석")
-    with st.expander("📦 생산량 및 가격 추이"):
-        freeze_data = pd.DataFrame({
-            "월": ["1월", "2월", "3월", "4월"],
-            "생산량(kg)": [120, 135, 150, 170],
-            "평균가격(₩/kg)": [40000, 42000, 41000, 43000]
-        })
-        st.dataframe(freeze_data)
-        fig2 = px.bar(freeze_data, x="월", y="생산량(kg)", title="월별 생산량")
-        fig3 = px.line(freeze_data, x="월", y="평균가격(₩/kg)", title="월별 가격 추이")
-        st.plotly_chart(fig2, use_container_width=True)
-        st.plotly_chart(fig3, use_container_width=True)
+
+    st.markdown("""
+    동결건조 공정은 스마트팜 내에서 고부가가치를 창출할 수 있는 핵심 단계입니다. 아래의 리포트는 월별 생산 실적과 유통 가격 데이터를 기반으로 수익성 및 시장 동향을 종합적으로 보여줍니다.
+    """)
+
+    st.subheader("📦 생산 실적 개요")
+    st.markdown("""
+    아래는 1월부터 4월까지의 동결건조 딸기 생산량을 정리한 표입니다. 생산량은 점진적으로 증가하는 추세를 보이고 있으며, 이는 재배 기술 안정화 및 수요 증가에 기인한 것으로 분석됩니다.
+    """)
+    production_data = pd.DataFrame({
+        "월": ["1월", "2월", "3월", "4월"],
+        "생산량(kg)": [120, 135, 150, 170]
+    })
+    st.dataframe(production_data, use_container_width=True)
+    fig_prod = px.bar(production_data, x="월", y="생산량(kg)", title="📊 월별 동결건조 생산량", text_auto=True)
+    st.plotly_chart(fig_prod, use_container_width=True)
+
+    st.subheader("💰 유통 가격 동향 분석")
+    st.markdown("""
+    다음은 월별 동결건조 제품의 평균 유통 단가입니다. 가격은 전체적으로 상승세를 보이고 있으며,
+    이는 품질 인식 제고 및 판로 다변화의 영향으로 해석됩니다. 
+
+    유통 가격의 변화는 재배 원가와 비교해 수익성을 결정하는 중요한 지표입니다. 특히 원자재, 에너지 비용,
+    물류비 등의 변동성과 연동하여 가격 데이터를 분석하면 향후 수익률 시뮬레이션과 판매 전략 수립에 유용합니다.
+
+    📌 **부서장이 궁금할만한 핵심 인사이트**:
+    - 3월에 가격 하락 원인은 일시적 과잉공급인지, 품질 저하인지?
+    - 생산량 증가 대비 가격 증가폭은 충분한가? 마진율은 유지되고 있는가?
+    - 향후 6개월간 주요 바이어 확보를 위한 가격 밴드는?
+    """)
+    price_data = pd.DataFrame({
+        "월": ["1월", "2월", "3월", "4월"],
+        "평균가격(₩/kg)": [40000, 42000, 41000, 43000]
+    })
+    st.dataframe(price_data, use_container_width=True)
+    fig_price = px.line(price_data, x="월", y="평균가격(₩/kg)", markers=True, title="💹 월별 평균 유통 가격 추이")
+    st.plotly_chart(fig_price, use_container_width=True)
+    st.plotly_chart(fig_price, use_container_width=True)
