@@ -127,6 +127,7 @@ elif page == "📷 생육 일자별 기록":
                 variety = st.text_input(f"품종", key=f"variety{i}")
                 area = st.text_input(f"작업 구역", key=f"zone{i}")
                 work_type = st.selectbox(f"작업 단계", ["정식", "수확", "방제", "양액관리", "온습도관리", "점검", "기타"], key=f"worktype{i}")
+                activity_type = st.selectbox(f"활동 유형", ["농약", "비료", "인력"], key=f"atype{i}")
                 activity = st.text_area(f"작업 내용", key=f"activity{i}")
             with col2:
                 weather = st.selectbox(f"날씨", ["맑음", "흐림", "비", "눈"], key=f"weather{i}")
@@ -135,6 +136,8 @@ elif page == "📷 생육 일자별 기록":
                 humidity = st.number_input(f"습도(%)", key=f"humid{i}")
                 rainfall = st.number_input(f"강수량(mm)", key=f"rain{i}")
                 is_public = st.radio(f"공개 여부", ["공개", "비공개"], key=f"public{i}")
+
+            photo = st.file_uploader(f"📸 {date} 생육 사진 첨부 (선택)", type=["jpg", "png", "jpeg"], key=f"photo{i}")
 
             logs.append({
                 "날짜": date,
@@ -148,7 +151,9 @@ elif page == "📷 생육 일자별 기록":
                 "최고기온": temp_high,
                 "습도": humidity,
                 "강수량": rainfall,
-                "공개 여부": is_public
+                "공개 여부": is_public,
+                "활동 유형": activity_type,
+                "사진 파일명": photo.name if photo else "없음"
             })
 
         df = pd.DataFrame(logs)
@@ -183,7 +188,16 @@ elif page == "📷 생육 일자별 기록":
         for entry in logs:
             c.setFont("Helvetica", 11)
             for key, value in entry.items():
-                c.drawString(50, y, f"{key}: {value}")
+                if key == "사진 파일명" and value != "없음":
+                    try:
+                        img_path = photo.name
+                        c.drawImage(ImageReader(photo), 50, y - 120, width=200, height=120)
+                        y -= 140
+                    except:
+                        c.drawString(50, y, f"사진 첨부 실패")
+                        y -= 16
+                else:
+                    c.drawString(50, y, f"{key}: {value}")
                 y -= 16
                 if y < 100:
                     c.showPage()
