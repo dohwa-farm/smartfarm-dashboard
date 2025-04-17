@@ -49,27 +49,12 @@ if page == "📷 생육 일자별 기록":
         img = image.resize((100, 100)).convert("RGB")
         arr = np.array(img)
         avg_green = arr[:, :, 1].mean()
-        avg_red = arr[:, :, 0].mean()
-        avg_blue = arr[:, :, 2].mean()
-        suggestions = []
-
         if avg_green < 80:
-            diagnosis = "⚠️ 생육 불량 (엽색 저조)"
-            suggestions.append("의심되는 질병: 질소 결핍")
-            suggestions.append("조치: 요소비료 0.2% 엽면시비")
+            return "⚠️ 생육 불량 (엽색 저조)", ["의심되는 질병: 질소 결핍", "추천 조치: 요소비료 0.2% 엽면시비"]
         elif avg_green > 180:
-            diagnosis = "✅ 건강 양호 (엽색 짙음)"
+            return "✅ 건강 양호 (엽색 짙음)", []
         else:
-            diagnosis = "🔍 정상 범위"
-            suggestions.append("주의: 생육 변동 가능성 있음")
-            suggestions.append("관수량과 환기 빈도 점검")
-
-        if avg_red > 150:
-            suggestions.append("❗ 과실 조기 성숙 가능성")
-        if avg_blue > 130:
-            suggestions.append("🔍 잎색 변색 또는 해충 피해 의심")
-
-        return diagnosis, suggestions, ["주의: 생육 변동 가능성 있음", "관수량과 환기 빈도 점검"]
+            return "🔍 정상 범위", ["주의: 생육 변동 가능성 있음", "관수량과 환기 빈도 점검"]
         if avg_green < 80:
             return "⚠️ 생육 불량 (엽색 저조)"
         elif avg_green > 180:
@@ -121,14 +106,14 @@ if page == "📷 생육 일자별 기록":
             is_public := st.radio("공개 여부", ["공개", "비공개"]),
             photo := st.file_uploader("📸 생육 사진 첨부 (선택)", type=["jpg", "png", "jpeg"])
             if photo is not None:
-    image = Image.open(photo)
-    st.image(image, caption="업로드된 생육 사진", use_column_width=True)
-    diagnosis, suggestions = analyze_plant_health(image)
-    st.markdown(f"**AI 진단 결과:** {diagnosis}")
-    if suggestions:
-        st.markdown("**📌 자동 분석 제안:**")
-        for s in suggestions:
-            st.markdown(f"- {s}")
+                image = Image.open(photo)
+                st.image(image, caption="업로드된 생육 사진", use_column_width=True)
+                diagnosis, suggestions = analyze_plant_health(image)
+                st.markdown(f"**AI 진단 결과:** {diagnosis}")
+                if suggestions:
+                    st.markdown("**📌 자동 분석 제안:**")
+                    for s in suggestions:
+                        st.markdown(f"- {s}")
         )
 
 if page == "📊 생육 분석 요약":
@@ -157,9 +142,11 @@ if page == "🌱 육묘장 관리":
     육묘장 영농일지는 기록된 데이터를 달력 형태로 일목요연하게 조회할 수 있습니다.
     아래 기록창은 선택한 날짜와 작업 구역에 따라 필터링된 일지를 확인하거나 새로 입력할 수 있습니다.
     """)
-    st.markdown("육묘장에서는 초기 생육 단계의 관리가 매우 중요합니다. 다음 항목들을 기반으로 매일 관리 상태를 점검하고 기록하세요:")
+    st.markdown("""
+    육묘장에서는 초기 생육 단계의 관리가 매우 중요합니다. 다음 항목들을 기반으로 매일 관리 상태를 점검하고 기록하세요:
+    """)
 
-        
+        st.subheader(f"📝 {selected_nursery_date.strftime('%Y년 %m월 %d일')} 육묘장 관리 기록")
     from streamlit_calendar import calendar_component
     with st.expander("📅 달력으로 기록 보기"):
         calendar_component(events=[
@@ -171,6 +158,7 @@ if page == "🌱 육묘장 관리":
         st.session_state["add_nursery_log"] = True
 
     if st.session_state.get("add_nursery_log", True):
+
     col1, col2 = st.columns(2)
     with col1:
         nursery_crop = st.text_input("육묘 품종")
