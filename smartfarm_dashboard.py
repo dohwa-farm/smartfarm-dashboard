@@ -61,45 +61,49 @@ if page == "🏠 기본정보 입력":
             74.719700, 74.719640, 74.719580
         ]
     })
-    selected_zone = st.selectbox("농장 내 위치 선택:", map_data["위치명"].tolist())
-    zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
-    farm_location = f"{selected_zone} - {zone_coords[0]}, {zone_coords[1]}"
 
-    selected_df = map_data[map_data["위치명"] == selected_zone]
-    lat, lon = zone_coords
-    square = [[
-        [lon - 0.00005, lat - 0.00005],
-        [lon + 0.00005, lat - 0.00005],
-        [lon + 0.00005, lat + 0.00005],
-        [lon - 0.00005, lat + 0.00005]
-    ]]
+    if not map_data.empty:
+        selected_zone = st.selectbox("농장 내 위치 선택:", map_data["위치명"].tolist())
+        zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
+        farm_location = f"{selected_zone} - {zone_coords[0]}, {zone_coords[1]}"
 
-    st.pydeck_chart(pdk.Deck(
-        map_style='mapbox://styles/mapbox/satellite-v9',
-        initial_view_state=pdk.ViewState(
-            latitude=lat,
-            longitude=lon,
-            zoom=19,
-            pitch=0,
-        ),
-        layers=[
-            pdk.Layer(
-                "PolygonLayer",
-                data=pd.DataFrame({'coordinates': [square]}),
-                get_polygon="coordinates",
-                get_fill_color='[255, 0, 0, 40]',
-                get_line_color='[255, 0, 0]',
-                line_width_min_pixels=2,
+        selected_df = map_data[map_data["위치명"] == selected_zone]
+        lat, lon = zone_coords
+        square = [[
+            [lon - 0.00005, lat - 0.00005],
+            [lon + 0.00005, lat - 0.00005],
+            [lon + 0.00005, lat + 0.00005],
+            [lon - 0.00005, lat + 0.00005]
+        ]]
+
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/satellite-v9',
+            initial_view_state=pdk.ViewState(
+                latitude=lat,
+                longitude=lon,
+                zoom=19,
+                pitch=0,
             ),
-            pdk.Layer(
-                "TextLayer",
-                data=selected_df,
-                get_position='[lon, lat]',
-                get_text='위치명',
-                get_size=14,
-                get_color='[255, 255, 255]',
-                get_alignment_baseline='bottom',
-            )
-        ],
-        tooltip={"text": "{위치명}"}
-    ))
+            layers=[
+                pdk.Layer(
+                    "PolygonLayer",
+                    data=pd.DataFrame({'coordinates': [square]}),
+                    get_polygon="coordinates",
+                    get_fill_color='[255, 0, 0, 40]',
+                    get_line_color='[255, 0, 0]',
+                    line_width_min_pixels=2,
+                ),
+                pdk.Layer(
+                    "TextLayer",
+                    data=selected_df,
+                    get_position='[lon, lat]',
+                    get_text='위치명',
+                    get_size=14,
+                    get_color='[255, 255, 255]',
+                    get_alignment_baseline='bottom',
+                )
+            ],
+            tooltip={"text": "{위치명}"}
+        ))
+    else:
+        st.info("지도 데이터를 불러오는 중이거나 비어 있습니다.")
