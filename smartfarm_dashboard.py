@@ -65,32 +65,41 @@ if page == "🏠 기본정보 입력":
     zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
     farm_location = f"{selected_zone} - {zone_coords[0]}, {zone_coords[1]}"
 
+        selected_df = map_data[map_data["위치명"] == selected_zone]
+
+    lat, lon = zone_coords
+    square = [[
+        [lon - 0.00005, lat - 0.00005],
+        [lon + 0.00005, lat - 0.00005],
+        [lon + 0.00005, lat + 0.00005],
+        [lon - 0.00005, lat + 0.00005]
+    ]]
+
     st.pydeck_chart(pdk.Deck(
         map_style='mapbox://styles/mapbox/satellite-v9',
         initial_view_state=pdk.ViewState(
-            latitude=42.9503,
-            longitude=74.7199,
-            zoom=18,
+            latitude=lat,
+            longitude=lon,
+            zoom=19,
             pitch=0,
         ),
         layers=[
             pdk.Layer(
-                'ScatterplotLayer',
-                data=map_data,
-                get_position='[lon, lat]',
-                get_color='[255, 0, 0, 160]',
-                get_radius=4,
-                pickable=True,
+                "PolygonLayer",
+                data=pd.DataFrame({'coordinates': [square]}),
+                get_polygon="coordinates",
+                get_fill_color='[255, 0, 0, 40]',
+                get_line_color='[255, 0, 0]',
+                line_width_min_pixels=2,
             ),
             pdk.Layer(
-                'TextLayer',
-                data=map_data,
+                "TextLayer",
+                data=selected_df,
                 get_position='[lon, lat]',
                 get_text='위치명',
                 get_size=14,
-                get_color='[0, 0, 0]',
-                get_angle=0,
-                get_alignment_baseline='bottom'
+                get_color='[255, 255, 255]',
+                get_alignment_baseline='bottom',
             )
         ],
         tooltip={"text": "{위치명}"}
@@ -142,3 +151,22 @@ if page == "📊 생육 분석 요약":
                 d = 1.15 if row["야간최저온도"] < delay_night_temp else 1.0
                 return t * d
             data["생육지수"] = data.apply(score, axis=1)
+            cumulative = data["생육지수"].cumsum()
+            predicted_day = cumulative[cumulative >= base_days].first_valid_index()
+            harvest_date = data.iloc[predicted_day]["날짜"] if predicted_day is not None else None
+            return harvest_date, data
+
+        predicted_harvest, df = simulate_growth(df, crop_type)
+
+        st.subheader("📊 생육 예측 요약")
+        st.write(df)
+        col1, col2, col3 = st.columns(3)
+        col1.metric("평균 온도", f"{df['평균온도'].mean():.1f}℃")
+        col2.metric("야간 최저온도", f"{df['야간최저온도'].min():.1f}℃")
+        col3.metric("예상 수확일", predicted_harvest.strftime('%Y-%m-%d') if predicted_harvest else "예측불가")
+
+        st.subheader("📈 생육 환경 변화 그래프")
+        fig1 = px.line(df, x="날짜", y=["평균온도", "야간최저온도"], title="온도 추이")
+        fig2 = px.line(df, x="날짜", y="EC", title="EC 추이")
+        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True)
