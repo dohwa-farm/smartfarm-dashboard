@@ -35,6 +35,8 @@ logo_bytes = load_logo()
 if logo_bytes:
     st.image(logo_bytes, width=180)
 
+page = st.sidebar.radio("페이지 선택", ["🏠 기본정보 입력", "📷 생육 일자별 기록", "📊 생육 분석 요약", "📦 동결건조 관리"])
+
 if page != "📦 동결건조 관리":
     st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
