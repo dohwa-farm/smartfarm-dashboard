@@ -40,15 +40,15 @@ page = st.sidebar.radio("페이지 선택", [
     "📷 생육 일자별 기록",
     "📊 생육 분석 요약",
     "📦 동결건조 관리",
-    "🌱 육묘장 관리"
+    "🌱 육묘장 관리",
+    "🧠 AI 생육 이미지 분석"
 ])
 
 if page in ["🏠 기본정보 입력", "📷 생육 일자별 기록", "📊 생육 분석 요약"]:
     st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
 if page == "📷 생육 일자별 기록":
-    import streamlit_calendar as calendar
-    st.subheader("📅 달력 기반 생육 일자별 기록")
+    st.subheader("📅 생육 일자별 기록")
     selected_date = st.date_input("작성일", datetime.date.today())
     st.text_input("재배 품목")
     st.text_input("품종")
@@ -66,7 +66,36 @@ if page == "📷 생육 일자별 기록":
     st.number_input("강수량(mm)")
     st.radio("공개 여부", ["공개", "비공개"])
     st.file_uploader("📸 생육 사진 첨부", type=["jpg", "jpeg", "png"])
-    
-    calendar.calendar_component(events=[
-        {"title": "영농일지 기록", "start": str(datetime.date.today()), "end": str(datetime.date.today())}
-    ])
+    st.button("➕ 영농일지 추가 저장")
+
+elif page == "📊 생육 분석 요약":
+    st.subheader("📈 생육 분석 요약 - 주간 수확 예측 및 생육 비교")
+    st.write("- 📅 주차별 생육 추세, 수확 예측일, 평균 엽록소, 평균 초장 등의 요약 제공")
+
+elif page == "📦 동결건조 관리":
+    st.markdown("<h2>📦 동결건조 관리 리포트</h2>", unsafe_allow_html=True)
+    st.write("- 💡 동결건조 생산량 기록")
+    st.write("- 📊 월별 평균 가격 추이 및 시장 대응 전략 기록")
+    st.write("- 🧾 원료 투입량 대비 최종 수율 관리")
+
+elif page == "🌱 육묘장 관리":
+    st.markdown("<h2>🌱 육묘장 관리</h2>", unsafe_allow_html=True)
+    st.write("- 🔹 일자별 관리 사항 기록")
+    st.write("- 🌡️ 온습도, 급액, 광량, 환기 기록")
+    st.write("- 📷 상태 사진 기록 및 이전 데이터 비교")
+    st.date_input("관리 일자", datetime.date.today())
+    st.text_input("육묘 품종")
+    st.number_input("온도(℃)")
+    st.number_input("습도(%)")
+    st.number_input("광량(lux)")
+    st.number_input("급액량(ml)")
+    st.text_area("관리 내용 및 특이사항")
+    st.file_uploader("📸 상태 사진", type=["jpg", "jpeg", "png"])
+
+elif page == "🧠 AI 생육 이미지 분석":
+    st.subheader("🧠 AI 기반 생육 이미지 진단")
+    st.write("- 사진을 업로드하면 AI가 병해충 여부, 엽색 이상, 과실 상태 등을 분석합니다.")
+    uploaded_img = st.file_uploader("📤 진단할 생육 이미지 업로드", type=["jpg", "jpeg", "png"])
+    if uploaded_img:
+        st.image(uploaded_img, caption="업로드된 이미지", use_column_width=True)
+        st.success("✅ 이미지 분석 기능은 추후 AI 모델 연동 시 적용 예정입니다.")
