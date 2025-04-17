@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import datetime as dt
+import datetime
 import plotly.express as px
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -110,4 +110,43 @@ if page == "🏠 기본정보 입력":
 
 elif page == "📷 생육 일자별 기록":
     st.header("📷 생육 일자별 기록")
-    star
+    start_date = st.date_input("기록 시작일", datetime.date.today())
+    num_days = st.number_input("기록할 일 수", min_value=1, max_value=30, value=7)
+    logs = []
+    for i in range(num_days):
+        date = start_date + datetime.timedelta(days=i)
+        with st.expander(f"{date} 생육기록"):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_temp = st.number_input(f"{date} 평균온도 (℃)", key=f"t{i}")
+            with col2:
+                night_temp = st.number_input(f"{date} 야간최저온도 (℃)", key=f"n{i}")
+            with col3:
+                ec = st.number_input(f"{date} EC", key=f"e{i}")
+            memo = st.text_area(f"{date} 메모", key=f"memo{i}")
+            logs.append({"날짜": date, "평균온도": avg_temp, "야간최저": night_temp, "EC": ec, "메모": memo})
+    st.session_state["logs_df"] = pd.DataFrame(logs)
+
+elif page == "📊 생육 분석 요약":
+    df = st.session_state.get("logs_df", pd.DataFrame())
+    if df.empty:
+        st.warning("생육 기록을 먼저 입력해주세요.")
+    else:
+        st.subheader("📈 생육 환경 변화")
+        fig = px.line(df, x="날짜", y=["평균온도", "야간최저", "EC"], title="환경 데이터 추이")
+        st.plotly_chart(fig, use_container_width=True)
+
+elif page == "📦 동결건조 관리":
+    st.markdown('<div class="report-title">📦 동결건조 관리 리포트</div>', unsafe_allow_html=True)
+    st.subheader("🧊 월별 동결건조 생산현황 및 유통 가격 분석")
+    with st.expander("📦 생산량 및 가격 추이"):
+        freeze_data = pd.DataFrame({
+            "월": ["1월", "2월", "3월", "4월"],
+            "생산량(kg)": [120, 135, 150, 170],
+            "평균가격(₩/kg)": [40000, 42000, 41000, 43000]
+        })
+        st.dataframe(freeze_data)
+        fig2 = px.bar(freeze_data, x="월", y="생산량(kg)", title="월별 생산량")
+        fig3 = px.line(freeze_data, x="월", y="평균가격(₩/kg)", title="월별 가격 추이")
+        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig3, use_container_width=True)
