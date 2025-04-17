@@ -75,7 +75,7 @@ if page == "📷 생육 일자별 기록":
         .custom-table input, .custom-table select, .custom-table textarea { width: 100%; }
         </style>
         """, unsafe_allow_html=True)
-        st.markdown("""
+        st.markdown(""")
         <table class="custom-table">
         <tr><td><b>재배 품목</b></td><td>{}</td><td><b>품종</b></td><td>{}</td></tr>
         <tr><td><b>작업 구역</b></td><td>{}</td><td><b>작업 단계</b></td><td>{}</td></tr>
