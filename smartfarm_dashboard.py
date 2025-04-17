@@ -109,23 +109,118 @@ if page == "🏠 기본정보 입력":
         st.info("지도 데이터를 불러오는 중이거나 비어 있습니다.")
 
 elif page == "📷 생육 일자별 기록":
-    st.header("📷 생육 일자별 기록")
+    st.header("📷 생육 일자별 영농일지 기록")
+    st.markdown("""
+    시설 양액재배에 맞춘 영농일지 입력 양식입니다. 농업ON 영농일지 포맷을 참고하여 현장 작업 내용을 체계적으로 기록할 수 있도록 구성하였습니다.
+    """)
+
     start_date = st.date_input("기록 시작일", datetime.date.today())
     num_days = st.number_input("기록할 일 수", min_value=1, max_value=30, value=7)
     logs = []
+
     for i in range(num_days):
         date = start_date + datetime.timedelta(days=i)
-        with st.expander(f"{date} 생육기록"):
-            col1, col2, col3 = st.columns(3)
+        with st.expander(f"📅 {date} 영농일지"):
+            col1, col2 = st.columns(2)
             with col1:
-                avg_temp = st.number_input(f"{date} 평균온도 (℃)", key=f"t{i}")
+                crop = st.text_input(f"재배 품목", key=f"crop{i}")
+                variety = st.text_input(f"품종", key=f"variety{i}")
+                area = st.text_input(f"작업 구역", key=f"zone{i}")
+                work_type = st.selectbox(f"작업 단계", ["정식", "수확", "방제", "양액관리", "온습도관리", "점검", "기타"], key=f"worktype{i}")
+                activity = st.text_area(f"작업 내용", key=f"activity{i}")
             with col2:
-                night_temp = st.number_input(f"{date} 야간최저온도 (℃)", key=f"n{i}")
-            with col3:
-                ec = st.number_input(f"{date} EC", key=f"e{i}")
-            memo = st.text_area(f"{date} 메모", key=f"memo{i}")
-            logs.append({"날짜": date, "평균온도": avg_temp, "야간최저": night_temp, "EC": ec, "메모": memo})
-    st.session_state["logs_df"] = pd.DataFrame(logs)
+                weather = st.selectbox(f"날씨", ["맑음", "흐림", "비", "눈"], key=f"weather{i}")
+                temp_low = st.number_input(f"최저기온(℃)", key=f"temp_low{i}")
+                temp_high = st.number_input(f"최고기온(℃)", key=f"temp_high{i}")
+                humidity = st.number_input(f"습도(%)", key=f"humid{i}")
+                rainfall = st.number_input(f"강수량(mm)", key=f"rain{i}")
+                is_public = st.radio(f"공개 여부", ["공개", "비공개"], key=f"public{i}")
+
+            logs.append({
+                "날짜": date,
+                "재배 품목": crop,
+                "품종": variety,
+                "작업 구역": area,
+                "작업 단계": work_type,
+                "작업 내용": activity,
+                "날씨": weather,
+                "최저기온": temp_low,
+                "최고기온": temp_high,
+                "습도": humidity,
+                "강수량": rainfall,
+                "공개 여부": is_public
+            })
+
+        df = pd.DataFrame(logs)
+    st.session_state["logs_df"] = df
+
+    st.subheader("📸 생육 사진 업로드")
+    photo_upload = st.file_uploader("해당 일자 사진 업로드 (선택)", accept_multiple_files=True)
+    if photo_upload:
+        for uploaded_file in photo_upload:
+            st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
+
+    st.subheader("📅 월별/구역별 영농일지 요약")
+    if not df.empty:
+        month_option = st.selectbox("월 선택", sorted(df["날짜"].dt.month.unique()))
+        area_option = st.selectbox("작업 구역 선택", ["전체"] + sorted(df["작업 구역"].dropna().unique()))
+
+        filtered_df = df[df["날짜"].dt.month == month_option]
+        if area_option != "전체":
+            filtered_df = filtered_df[filtered_df["작업 구역"] == area_option]
+
+        st.dataframe(filtered_df, use_container_width=True)
+
+    if st.button("📄 영농일지 PDF로 출력하기"):
+        from reportlab.pdfgen.canvas import Canvas
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, height - 40, "시설 스마트팜 영농일지 리포트")
+        y = height - 70
+
+        for entry in logs:
+            c.setFont("Helvetica", 11)
+            for key, value in entry.items():
+                c.drawString(50, y, f"{key}: {value}")
+                y -= 16
+                if y < 100:
+                    c.showPage()
+                    c.setFont("Helvetica", 11)
+                    y = height - 70
+            c.line(50, y, width - 50, y)
+            y -= 20
+
+        c.save()
+        buffer.seek(0)
+        b64 = base64.b64encode(buffer.read()).decode()
+        href = f'<a href="data:application/octet-stream;base64,{b64}" download="smartfarm_diary.pdf">📥 영농일지 PDF 다운로드</a>'
+        st.markdown(href, unsafe_allow_html=True)
+
+    if st.button("📄 PDF로 출력하여 저장하기"):
+        from reportlab.pdfgen.canvas import Canvas
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        c.setFont("Helvetica", 12)
+        c.drawString(50, height - 40, "키르 스마트팜 영농일지 리포트")
+        y = height - 70
+        for entry in logs:
+            for key, value in entry.items():
+                c.drawString(50, y, f"{key}: {value}")
+                y -= 18
+                if y < 100:
+                    c.showPage()
+                    c.setFont("Helvetica", 12)
+                    y = height - 70
+            c.line(50, y, width - 50, y)
+            y -= 20
+        c.save()
+        buffer.seek(0)
+        b64 = base64.b64encode(buffer.read()).decode()
+        href = f'<a href="data:application/octet-stream;base64,{b64}" download="smartfarm_diary.pdf">📥 영농일지 PDF 다운로드</a>'
+        st.markdown(href, unsafe_allow_html=True)
 
 elif page == "📊 생육 분석 요약":
     df = st.session_state.get("logs_df", pd.DataFrame())
