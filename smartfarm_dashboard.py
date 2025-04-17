@@ -173,4 +173,4 @@ elif page == "📦 동결건조 관리":
     })
     st.dataframe(price_data, use_container_width=True)
     fig_price = px.line(price_data, x="월", y="평균가격(₩/kg)", markers=True, title="💹 월별 평균 유통 가격 추이")
-    st.plotly_chart(fig_price, use_container_width=True)
+    st.plotly_chart(fig_price, use_container_width=True, key="fig_price_chart")
