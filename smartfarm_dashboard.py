@@ -35,7 +35,8 @@ logo_bytes = load_logo()
 if logo_bytes:
     st.image(logo_bytes, width=180)
 
-st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
+if page != "📦 동결건조 관리":
+    st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
 # 사이드바로 챕터 구분
 page = st.sidebar.radio("페이지 선택", ["🏠 기본정보 입력", "📷 생육 일자별 기록", "📊 생육 분석 요약", "📦 동결건조 관리"])
@@ -137,8 +138,8 @@ elif page == "📊 생육 분석 요약":
         st.plotly_chart(fig, use_container_width=True)
 
 elif page == "📦 동결건조 관리":
-    st.header("📦 동결건조 관리 리포트")
-    st.subheader("🧊 월별 생산 동향 및 유통 단가")
+    st.markdown('<div class="report-title">📦 동결건조 관리 리포트</div>', unsafe_allow_html=True)
+    st.subheader("🧊 월별 동결건조 생산현황 및 유통 가격 분석")
     with st.expander("📦 생산량 및 가격 추이"):
         freeze_data = pd.DataFrame({
             "월": ["1월", "2월", "3월", "4월"],
