@@ -136,7 +136,7 @@ elif page == "📊 생육 분석 요약":
         fig = px.line(df, x="날짜", y=["평균온도", "야간최저", "EC"], title="환경 데이터 추이")
         st.plotly_chart(fig, use_container_width=True)
 
-elif page == "❄️ 동결건조 탭":
+elif page == "❄️ 동결건조":
     st.header("❄️ 동결건조 딸기 리포트")
     with st.expander("📦 생산량 및 가격 추이"):
         freeze_data = pd.DataFrame({
