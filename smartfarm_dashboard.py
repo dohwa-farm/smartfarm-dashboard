@@ -59,8 +59,7 @@ if page == "🏠 기본정보 입력":
         "lon": [
             74.720100, 74.720250, 74.719850, 74.720300,
             74.719700, 74.719640, 74.719580
-        ],
-        "size": [5, 5, 5, 5, 5, 5, 5]
+        ]
     })
     selected_zone = st.selectbox("농장 내 위치 선택:", map_data["위치명"].tolist())
     zone_coords = map_data[map_data["위치명"] == selected_zone][["lat", "lon"]].values[0]
@@ -96,3 +95,50 @@ if page == "🏠 기본정보 입력":
         ],
         tooltip={"text": "{위치명}"}
     ))
+
+if page == "📷 생육 일자별 기록":
+    st.markdown("## 📷 생육 일자별 기록")
+    photo_logs = []
+    data_rows = []
+
+    start_date = st.date_input("📅 시작일 입력", dt.date.today())
+    num_days = st.number_input("기록할 일수", min_value=1, max_value=30, value=7)
+
+    for i in range(num_days):
+        date = start_date + dt.timedelta(days=i)
+        with st.expander(f"📆 {date} 생육기록 보기 / 입력"):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_temp = st.number_input(f"{date} 평균온도 (℃)", key=f"t{i}")
+            with col2:
+                night_temp = st.number_input(f"{date} 야간최저온도 (℃)", key=f"n{i}")
+            with col3:
+                ec = st.number_input(f"{date} EC", key=f"e{i}")
+            uploaded = st.file_uploader(f"{date} 생육 사진 업로드", type=["jpg", "jpeg", "png"], key=f"img{i}")
+            memo = st.text_area(f"{date} 생육 일지 메모", key=f"m{i}")
+            photo_logs.append((date, uploaded))
+            data_rows.append({"날짜": date, "평균온도": avg_temp, "야간최저온도": night_temp, "EC": ec, "메모": memo})
+
+    df = pd.DataFrame(data_rows)
+    st.session_state["daily_df"] = df
+
+if page == "📊 생육 분석 요약":
+    df = st.session_state.get("daily_df", pd.DataFrame())
+    if df.empty:
+        st.warning("먼저 생육 데이터를 입력해주세요. 왼쪽 메뉴에서 '📷 생육 일자별 기록'을 선택하세요.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            crop_type = st.selectbox("작물 선택", ["설향 딸기", "핑크 토마토"])
+        with col2:
+            flower_date = st.date_input("개화일 입력", dt.date.today())
+
+        def simulate_growth(data, crop):
+            base_days = 35 if crop == "설향 딸기" else 50
+            optimal_temp = 25
+            delay_night_temp = 12 if crop == "설향 딸기" else 15
+            def score(row):
+                t = max(0.2, 1 - abs(row["평균온도"] - optimal_temp) / 15)
+                d = 1.15 if row["야간최저온도"] < delay_night_temp else 1.0
+                return t * d
+            data["생육지수"] = data.apply(score, axis=1)
