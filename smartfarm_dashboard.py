@@ -65,14 +65,15 @@ if page == "📒 영농일지":
             work_stage = st.selectbox("작업단계 선택", ["정식", "수확", "방제", "관리", "기타"])
 
         work_content = st.text_area("작업내용")
-        st.button("이전 작업내용 가져오기")
 
         st.markdown("#### 활동유형")
         act_type = st.radio("활동유형", ["농약", "비료", "인력"], horizontal=True)
         pesticide_category = st.selectbox("농약 분류 선택", ["살균제", "살충제", "살균,살충제", "살충,제초제", "제초제", "생장조정제", "기타", "친환경 농약"])
         cols = st.columns([2, 1])
-        pesticide_amount = cols[0].text_input("살포량을 입력하세요")
-        pesticide_unit = cols[1].selectbox("단위를 선택하세요.", ["kg", "g", "mg", "l", "ml", "dl"])
+        with cols[0]:
+            pesticide_amount = st.text_input("살포량을 입력하세요")
+        with cols[1]:
+            pesticide_unit = st.selectbox("단위를 선택하세요.", ["kg", "g", "mg", "l", "ml", "dl"])
 
         st.markdown("#### 날씨정보")
         weather = st.selectbox("날씨", ["맑음", "흐림", "비", "눈"])
