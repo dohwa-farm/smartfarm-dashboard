@@ -60,7 +60,7 @@ if page == "📒 영농일지":
             with col1:
                 crop = st.text_input("재배 품목")
                 variety = st.text_input("품종")
-                section = st.text_input("작업 구역")
+                section = st.multiselect("작업 구역", ["A동 토마토", "B동 딸기", "C동", "D동 토마토", "E동 토마토", "F동", "G동 토마토"])
                 work_stage = st.selectbox("작업 단계", ["정식", "수확", "방제", "양액관리", "온습도관리", "점검", "기타"])
                 activity_type = st.radio("활동 유형", ["농약", "비료", "인력"], horizontal=True)
             with col2:
@@ -82,7 +82,7 @@ if page == "📒 영농일지":
         "일자": [selected_date],
         "작목": [crop],
         "품종": [variety],
-        "구역": [section],
+        "구역": [', '.join(section)],
         "작업단계": [work_stage],
         "날씨": [weather],
         "최저기온": [temp_min],
