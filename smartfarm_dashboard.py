@@ -112,6 +112,8 @@ elif page == "🌱 육묘장 관리":
         st.form_submit_button("➕ 육묘장 저장")
 
 elif page == "🧠 AI 생육 이미지 분석":
+    st.subheader("🧠 AI 생육 이미지 분석")
+    st.info("AI 분석 기능은 현재 개발 중입니다. 엽색, 해충, 과실 분석 기능이 곧 탑재될 예정입니다.")
 
 elif page == "🏠 기본정보 입력":
     st.subheader("📍 스마트팜 위치 지도")
