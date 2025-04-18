@@ -1,4 +1,4 @@
-import streamlit as st
+\import streamlit as st
 import pandas as pd
 import datetime
 import plotly.express as px
@@ -117,11 +117,36 @@ elif page == "🧠 AI 생육 이미지 분석":
 
 elif page == "🏠 기본정보 입력":
     st.subheader("📍 스마트팜 위치 지도")
-    st.map(pd.DataFrame({
-        'lat': [42.9502, 42.9505, 42.9508, 42.9511],
-        'lon': [74.7198, 74.7201, 74.7204, 74.7207],
-        '구역': ['A동', 'B동', 'C동', 'D동']
-    }), zoom=17)
+    map_data = pd.DataFrame({
+        'lat': [42.950370, 42.950310, 42.950250, 42.950600, 42.950770, 42.950880, 42.951050],
+        'lon': [74.719870, 74.720060, 74.720250, 74.719800, 74.719900, 74.720150, 74.720400],
+        '구역': ['A동 토마토', 'B동 딸기', 'C동', 'D동 토마토', 'E동 토마토', 'F동', 'G동 토마토']
+    })
+
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=map_data,
+        get_position='[lon, lat]',
+        get_fill_color='[200, 30, 0, 160]',
+        get_radius=10,
+        pickable=True,
+        auto_highlight=True
+    )
+
+    view_state = pdk.ViewState(
+        latitude=42.9506,
+        longitude=74.7200,
+        zoom=18,
+        pitch=0
+    )
+
+    st.pydeck_chart(pdk.Deck(
+        map_style="mapbox://styles/mapbox/satellite-v9",
+        initial_view_state=view_state,
+        layers=[layer],
+        tooltip={"text": "{구역}"}
+    ))
+
     st.subheader("🧠 AI 생육 이미지 진단")
     uploaded_img = st.file_uploader("진단할 생육 이미지 업로드", type=["jpg", "jpeg", "png"], key="ai_upload")
     if uploaded_img:
