@@ -112,8 +112,16 @@ elif page == "🌱 육묘장 관리":
         st.form_submit_button("➕ 육묘장 저장")
 
 elif page == "🧠 AI 생육 이미지 분석":
+
+elif page == "🏠 기본정보 입력":
+    st.subheader("📍 스마트팜 위치 지도")
+    st.map(pd.DataFrame({
+        'lat': [42.9502, 42.9505, 42.9508, 42.9511],
+        'lon': [74.7198, 74.7201, 74.7204, 74.7207],
+        '구역': ['A동', 'B동', 'C동', 'D동']
+    }), zoom=17)
     st.subheader("🧠 AI 생육 이미지 진단")
-    uploaded_img = st.file_uploader("진단할 생육 이미지 업로드", type=["jpg", "jpeg", "png"])
+    uploaded_img = st.file_uploader("진단할 생육 이미지 업로드", type=["jpg", "jpeg", "png"], key="ai_upload")
     if uploaded_img:
         st.image(uploaded_img, caption="업로드된 이미지", use_column_width=True)
         st.success("✅ AI 진단 기능은 추후 추가 예정입니다.")
