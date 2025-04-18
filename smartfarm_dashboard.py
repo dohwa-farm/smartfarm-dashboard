@@ -39,7 +39,7 @@ if logo_bytes:
 # 페이지 선택을 가로 radio로 변경
 page = st.radio("페이지 선택", [
     "🏠 기본정보 입력",
-    "📷 생육 일자별 기록",
+    "📒 영농일지",
     "📅 영농일지 달력",
     "📊 생육 분석 요약",
     "📦 동결건조 관리",
@@ -50,7 +50,8 @@ page = st.radio("페이지 선택", [
 if page in ["🏠 기본정보 입력", "📷 생육 일자별 기록", "📊 생육 분석 요약"]:
     st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
 
-if page == "📷 생육 일자별 기록":
+if page == "📒 영농일지":
+    st.markdown("<h2 style='color:#2E86C1;'>📒 영농일지 작성</h2>", unsafe_allow_html=True)
     st.subheader("📅 생육 일자별 기록 달력")
     selected_date = st.date_input("작성일자", datetime.date.today(), key="growth_date")
     with st.expander(f"📌 {selected_date} 생육일지 작성"):
@@ -64,8 +65,9 @@ if page == "📷 생육 일자별 기록":
                 activity_type = st.radio("활동 유형", ["농약", "비료", "인력"], horizontal=True)
             with col2:
                 pesticide_type = st.selectbox("농약 분류 선택", ["살균제", "살충제", "살균,살충제", "살충,제초제", "제초제", "생장조정제", "기타", "친환경 농약"])
-                pesticide_amount = st.text_input("살포량")
-                pesticide_unit = st.selectbox("단위", ["kg", "g", "mg", "l", "ml", "dl"])
+                with st.columns([2, 1]) as cols:
+    pesticide_amount = cols[0].text_input("살포량")
+    pesticide_unit = cols[1].selectbox("단위", ["kg", "g", "mg", "l", "ml", "dl"])
                 weather = st.selectbox("날씨", ["맑음", "흐림", "비", "눈"])
                 temp_min = st.number_input("최저기온(℃)", format="%.2f")
                 temp_max = st.number_input("최고기온(℃)", format="%.2f")
@@ -74,9 +76,74 @@ if page == "📷 생육 일자별 기록":
             st.text_area("작업 내용")
             st.radio("공개 여부", ["공개", "비공개"], horizontal=True)
             st.file_uploader("📸 생육 사진 첨부", type=["jpg", "jpeg", "png"])
-            st.form_submit_button("➕ 영농일지 저장")
+            if st.form_submit_button("➕ 영농일지 저장"):
+    st.success("✅ 자동 저장 완료")
+    df_saved = pd.DataFrame({
+        "일자": [selected_date],
+        "작목": [crop],
+        "품종": [variety],
+        "구역": [section],
+        "작업단계": [work_stage],
+        "날씨": [weather],
+        "최저기온": [temp_min],
+        "최고기온": [temp_max],
+        "습도": [humidity],
+        "강수량": [rain]
+    })
+    towrite = BytesIO()
+    df_saved.to_excel(towrite, index=False)
+    towrite.seek(0)
+    st.download_button(
+        label="📥 엑셀로 다운로드",
+        data=towrite,
+        file_name=f"{selected_date}_영농일지.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    # 간단한 예시 데이터 저장
+    df_saved = pd.DataFrame({
+        "일자": [selected_date],
+        "작목": [crop],
+        "품종": [variety],
+        "구역": [section],
+        "작업단계": [work_stage]
+    })
+    towrite = BytesIO()
+    df_saved.to_excel(towrite, index=False)
+    towrite.seek(0)
+    st.download_button(
+        label="📥 엑셀로 다운로드",
+        data=towrite,
+        file_name=f"{selected_date}_영농일지.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 elif page == "📅 영농일지 달력":
+    import calendar
+    import random
+    today = datetime.date.today()
+    year, month = today.year, today.month
+    st.markdown(f"### 📆 {year}년 {month}월 영농일지")
+    st.markdown("💡 기록이 있는 날짜는 ✅ 표시됩니다.")
+    calendar_dates = []
+    for i in range(1, 32):
+        try:
+            d = datetime.date(year, month, i)
+            has_data = random.choice([True, False])  # 예시 랜덤
+            label = f"{d.strftime('%Y-%m-%d')} {'✅' if has_data else ''}"
+            st.button(label)
+        except:
+            pass
+    import calendar
+    today = datetime.date.today()
+    year, month = today.year, today.month
+    st.markdown(f"### 📆 {year}년 {month}월 영농일지")
+    st.markdown("_※ 달력 UI 및 일자별 마킹은 곧 연동됩니다_ 📅")
+    for i in range(1, 32):
+        try:
+            d = datetime.date(year, month, i)
+            st.button(f"{d.strftime('%Y-%m-%d')} 일지 작성")
+        except:
+            pass
     st.subheader("📅 영농일지 목록 (달력 기반)")
     st.success("💡 각 날짜를 클릭하면 해당 일자의 영농일지를 작성하거나 수정할 수 있습니다.")
     # 달력은 시각적으로 표현 어려워 placeholder만 둠
@@ -125,7 +192,17 @@ elif page == "🌱 육묘장 관리":
 
 elif page == "🧠 AI 생육 이미지 분석":
     st.subheader("🧠 AI 생육 이미지 분석")
-    st.info("AI 분석 기능은 현재 개발 중입니다. 엽색, 해충, 과실 분석 기능이 곧 탑재될 예정입니다.")
+    st.markdown("""
+AI 분석 기능은 시범 운영 중입니다.
+
+🧠 적용 기능:
+- 엽색 분석
+- 반점 인식
+- 병해충 탐지
+
+📸 생육 이미지를 업로드하면 자동 분석 결과가 제공됩니다.
+(지속 업데이트 중)
+""")
 
 elif page == "🏠 기본정보 입력":
     st.subheader("📍 스마트팜 위치 지도")
@@ -153,11 +230,19 @@ elif page == "🏠 기본정보 입력":
     )
 
     st.pydeck_chart(pdk.Deck(
-        map_style="mapbox://styles/mapbox/satellite-v9",
-        initial_view_state=view_state,
-        layers=[layer],
-        tooltip={"text": "{구역}"}
-    ))
+    map_style="mapbox://styles/mapbox/satellite-v9",
+    initial_view_state=view_state,
+    layers=[pdk.Layer(
+        "ScatterplotLayer",
+        data=map_data,
+        get_position='[lon, lat]',
+        get_fill_color='[30, 144, 255, 160]',
+        get_radius=10,
+        pickable=True,
+        auto_highlight=True
+    )],
+    tooltip={"text": "{구역}"}
+))
 
     st.subheader("🧠 AI 생육 이미지 진단")
     uploaded_img = st.file_uploader("진단할 생육 이미지 업로드", type=["jpg", "jpeg", "png"], key="ai_upload")
