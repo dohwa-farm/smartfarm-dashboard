@@ -10,6 +10,7 @@ from reportlab.lib.utils import ImageReader
 from PIL import Image as PILImage
 import base64
 import pydeck as pdk
+import requests
 
 st.set_page_config(
     page_title="📡 스마트팜 환경 리포트 | 키르기스스탄 딸기·토마토",
@@ -36,6 +37,7 @@ logo_bytes = load_logo()
 if logo_bytes:
     st.image(logo_bytes, width=160)
 
+# 페이지 선택을 가로 radio로 변경
 page = st.radio("페이지 선택", [
     "🏠 기본정보 입력",
     "📒 영농일지",
@@ -63,7 +65,16 @@ if page == "🧠 AI 생육 이미지 분석":
     uploaded_img = st.file_uploader("생육 이미지 업로드", type=["jpg", "jpeg", "png"])
     if uploaded_img:
         st.image(uploaded_img, caption="업로드된 이미지", use_column_width=True)
-        st.info("AI 분석 결과 예시: 엽색 정상 / 병반 없음 / 수확예정일 5일 후")
+        files = {"file": uploaded_img.getvalue()}
+        try:
+            response = requests.post("http://localhost:8000/predict", files=files)
+            if response.status_code == 200:
+                result = response.json()
+                st.success(f"🧠 분석 결과: {result['prediction']} (정확도: {result['confidence']*100:.1f}%)")
+            else:
+                st.error("❌ 분석 서버 오류. FastAPI 서버 상태를 확인하세요.")
+        except Exception as e:
+            st.error(f"❌ 서버 연결 오류: {e}")
 
 if page in ["🏠 기본정보 입력", "📊 생육 분석 요약"]:
     st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
