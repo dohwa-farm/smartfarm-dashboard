@@ -36,7 +36,6 @@ logo_bytes = load_logo()
 if logo_bytes:
     st.image(logo_bytes, width=160)
 
-# 페이지 선택을 가로 radio로 변경
 page = st.radio("페이지 선택", [
     "🏠 기본정보 입력",
     "📒 영농일지",
@@ -46,6 +45,25 @@ page = st.radio("페이지 선택", [
     "🌱 육묘장 관리",
     "🧠 AI 생육 이미지 분석"
 ], horizontal=True)
+
+if page == "📅 영농일지 달력":
+    st.markdown("### 📅 이번 달 영농일지 달력")
+    today = datetime.date.today()
+    year, month = today.year, today.month
+    for day in range(1, 32):
+        try:
+            d = datetime.date(year, month, day)
+            label = f"{d.strftime('%Y-%m-%d')} ✅"
+            st.button(label)
+        except:
+            pass
+
+if page == "🧠 AI 생육 이미지 분석":
+    st.markdown("### 🧠 AI 생육 이미지 분석")
+    uploaded_img = st.file_uploader("생육 이미지 업로드", type=["jpg", "jpeg", "png"])
+    if uploaded_img:
+        st.image(uploaded_img, caption="업로드된 이미지", use_column_width=True)
+        st.info("AI 분석 결과 예시: 엽색 정상 / 병반 없음 / 수확예정일 5일 후")
 
 if page in ["🏠 기본정보 입력", "📊 생육 분석 요약"]:
     st.markdown('<div class="report-title">🌱 키르 스마트팜 생육 리포트</div>', unsafe_allow_html=True)
@@ -95,3 +113,33 @@ if page == "📒 영농일지":
         submitted = st.form_submit_button("제출하기")
         if submitted:
             st.success("✅ 영농일지가 저장되었습니다.")
+            diary_data = pd.DataFrame({
+                "시작일": [start_date],
+                "종료일": [end_date],
+                "품목": [crop_type],
+                "필지": [crop_field],
+                "품종": [crop_name],
+                "모임명": [sowing_name],
+                "작업단계": [work_stage],
+                "작업내용": [work_content],
+                "활동유형": [act_type],
+                "농약 분류": [pesticide_category],
+                "살포량": [pesticide_amount],
+                "단위": [pesticide_unit],
+                "날씨": [weather],
+                "최저기온": [min_temp],
+                "최고기온": [max_temp],
+                "강수량": [rainfall],
+                "습도": [humidity],
+                "공개여부": [public],
+                "알림여부": [notify]
+            })
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                diary_data.to_excel(writer, index=False, sheet_name='영농일지')
+            st.download_button(
+                label="📥 엑셀로 다운로드",
+                data=output.getvalue(),
+                file_name="영농일지.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
